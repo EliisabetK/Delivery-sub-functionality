@@ -1,9 +1,9 @@
-CREATE TABLE weather (
+CREATE TABLE weather_data (
      id INT PRIMARY KEY,
      station_name VARCHAR(255),
-     wmo_code INT,
+     wmocode INT,
      air_temperature DECIMAL(5, 2),
      wind_speed DECIMAL(5, 2),
-     weather_phenomenon VARCHAR(255),
+     phenomenon VARCHAR(255),
      observation_timestamp TIMESTAMP
 );
