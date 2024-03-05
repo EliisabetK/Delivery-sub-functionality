@@ -1,7 +1,5 @@
-package com.example.trialtask.scheduler;
+package com.example.trialtask.weather;
 
-import com.example.trialtask.WeatherData;
-import com.example.trialtask.WeatherDataRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -24,7 +22,6 @@ public class WeatherDataImporter {
 
     /**
      * Constructs a new WeatherDataImporter with RestTemplate and WeatherDataRepository.
-     *
      * @param restTemplate RestTemplate used to make HTTP requests
      * @param weatherDataRepository repository used to save the imported weather data
      */
@@ -64,7 +61,6 @@ public class WeatherDataImporter {
                         String phenomenon = element.getElementsByTagName("phenomenon").item(0).getTextContent();
                         String observationTimestampString = doc.getDocumentElement().getAttribute("timestamp");
                         Long observationTimestamp = observationTimestampString.isEmpty() ? 0L : Long.parseLong(observationTimestampString);
-
 
                         WeatherData weatherData = new WeatherData();
                         weatherData.setStationName(stationName);

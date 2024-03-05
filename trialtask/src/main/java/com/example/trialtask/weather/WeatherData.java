@@ -1,4 +1,4 @@
-package com.example.trialtask;
+package com.example.trialtask.weather;
 
 import jakarta.persistence.*;
 
@@ -8,12 +8,12 @@ public class WeatherData {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String stationName;
+    private String city;
     private String wmocode;
     private Double airTemperature;
     private Double windSpeed;
     private String phenomenon;
-    private Long observationTimestamp;
+    private Long dateTime;
 
     /**
      * Getters and setter for all the information that is collected
@@ -27,11 +27,11 @@ public class WeatherData {
     }
 
     public String getStationName() {
-        return stationName;
+        return city;
     }
 
     public void setStationName(String stationName) {
-        this.stationName = stationName;
+        this.city = stationName;
     }
 
     public String getWmocode() {
@@ -67,10 +67,10 @@ public class WeatherData {
     }
 
     public Long getObservationTimestamp() {
-        return observationTimestamp;
+        return dateTime;
     }
 
     public void setObservationTimestamp(Long observationTimestamp) {
-        this.observationTimestamp = observationTimestamp;
+        this.dateTime = observationTimestamp;
     }
 }
