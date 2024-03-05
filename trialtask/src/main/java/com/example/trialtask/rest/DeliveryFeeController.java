@@ -17,10 +17,21 @@ public class DeliveryFeeController {
 
     private final DeliveryFeeService deliveryFeeService;
 
+    /**
+     *
+     * @param deliveryFeeService
+     */
     public DeliveryFeeController(DeliveryFeeService deliveryFeeService) {
         this.deliveryFeeService = deliveryFeeService;
     }
 
+    /**
+     *
+     * @param city
+     * @param vehicleType
+     * @param dateTime
+     * @return
+     */
     @GetMapping
     public ResponseEntity<?> calculateDeliveryFee(@RequestParam String city, @RequestParam String vehicleType, @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTime) {
         try {

@@ -7,8 +7,7 @@ import java.time.LocalDateTime;
 
 @Repository
 public interface WeatherDataRepository extends JpaRepository<WeatherData, Long> {
-    WeatherData findLatestByCity(String stationName);
-
-    WeatherData findByCityAndDateTime(String stationName, Long observationTimestamp);
+    WeatherData findLatestByStationName(String stationName);
+    WeatherData findByStationNameAndObservationTimestamp(String stationName, Long observationTimestamp);
 
 }

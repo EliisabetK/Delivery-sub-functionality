@@ -8,12 +8,12 @@ public class WeatherData {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String city;
+    private String stationName;
     private String wmocode;
     private Double airTemperature;
     private Double windSpeed;
     private String phenomenon;
-    private Long dateTime;
+    private Long observationTimestamp;
 
     /**
      * Getters and setter for all the information that is collected
@@ -27,11 +27,11 @@ public class WeatherData {
     }
 
     public String getStationName() {
-        return city;
+        return stationName;
     }
 
     public void setStationName(String stationName) {
-        this.city = stationName;
+        this.stationName = stationName;
     }
 
     public String getWmocode() {
@@ -67,10 +67,10 @@ public class WeatherData {
     }
 
     public Long getObservationTimestamp() {
-        return dateTime;
+        return observationTimestamp;
     }
 
     public void setObservationTimestamp(Long observationTimestamp) {
-        this.dateTime = observationTimestamp;
+        this.observationTimestamp = observationTimestamp;
     }
 }

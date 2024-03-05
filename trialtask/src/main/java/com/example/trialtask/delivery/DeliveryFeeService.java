@@ -2,10 +2,8 @@ package com.example.trialtask.delivery;
 
 import com.example.trialtask.weather.WeatherData;
 import com.example.trialtask.weather.WeatherDataRepository;
-import net.sf.jsqlparser.expression.DateTimeLiteralExpression;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
@@ -28,25 +26,57 @@ public class DeliveryFeeService {
      * @param vehicleType
      * @return
      */
+
     public double calculateDeliveryFee(String city, String vehicleType) {
-        WeatherData weatherData = weatherDataRepository.findLatestByCity(city);
+        if(city.equals("Tallinn"))
+            city += "-Harku";
+        else if(city.equals("Tartu"))
+            city += "-Tõravere";
 
-        double rbf = findRegionalBaseFee(city, vehicleType);
-        double atef = calculateAirTemperatureExtraFee(vehicleType, weatherData.getAirTemperature());
-        double wsef = calculateWindSpeedExtraFee(vehicleType, weatherData.getWindSpeed());
-        double wpef = calculateWeatherPhenomenonExtraFee(vehicleType, weatherData.getPhenomenon());
-
-        return rbf + atef + wsef + wpef;
+        WeatherData weatherData = weatherDataRepository.findLatestByStationName(city);
+        if (weatherData == null) {
+            throw new IllegalArgumentException("No weather data found for the station: " + city);
+        }
+        return calculateDeliveryFeeExtracted(city, vehicleType, weatherData);
     }
-    public double calculateDeliveryFee(String city, String vehicleType, LocalDateTime dateTime) {
-        long observationTimestamp = dateTime.toEpochSecond(ZoneOffset.UTC);
-        WeatherData weatherData = weatherDataRepository.findByCityAndDateTime(city, observationTimestamp);
 
+    /**
+     *
+     * @param city
+     * @param vehicleType
+     * @param dateTime
+     * @return
+     */
+    public double calculateDeliveryFee(String city, String vehicleType, LocalDateTime dateTime) {
+        if(city.equals("Tallinn"))
+            city += "-Harku";
+        else if(city.equals("Tartu"))
+            city += "-Tõravere";
+        long observationTimestamp = dateTime.toEpochSecond(ZoneOffset.UTC);
+        WeatherData weatherData = weatherDataRepository.findByStationNameAndObservationTimestamp(city, observationTimestamp);
+        if (weatherData == null) {
+            throw new IllegalArgumentException("No weather data found for the station: " + city + " at the specified date and time.");
+        }
+
+        return calculateDeliveryFeeExtracted(city, vehicleType, weatherData);
+    }
+
+    /**
+     *
+     * @param city
+     * @param vehicleType
+     * @param weatherData
+     * @return
+     */
+
+    private double calculateDeliveryFeeExtracted(String city, String vehicleType, WeatherData weatherData) {
         double rbf = findRegionalBaseFee(city, vehicleType);
         double atef = calculateAirTemperatureExtraFee(vehicleType, weatherData.getAirTemperature());
         double wsef = calculateWindSpeedExtraFee(vehicleType, weatherData.getWindSpeed());
-        double wpef = calculateWeatherPhenomenonExtraFee(vehicleType, weatherData.getPhenomenon());
-
+        double wpef = 0;
+        if (weatherData.getPhenomenon() != null) {
+            wpef = calculateWeatherPhenomenonExtraFee(vehicleType, weatherData.getPhenomenon());
+        }
         return rbf + atef + wsef + wpef;
     }
 
@@ -57,7 +87,7 @@ public class DeliveryFeeService {
      * @return
      */
     private double findRegionalBaseFee(String city, String vehicleType) {
-        if (city.equalsIgnoreCase("Tallinn")) {
+        if (city.equalsIgnoreCase("Tallinn-Harku") || city.equalsIgnoreCase("Tallinn")) {
             switch (vehicleType.toLowerCase()) {
                 case "car":
                     return 4.0;
@@ -66,7 +96,7 @@ public class DeliveryFeeService {
                 case "bike":
                     return 3.0;
             }
-        } else if (city.equalsIgnoreCase("Tartu")) {
+        } else if (city.equalsIgnoreCase("Tartu-Tõravere")|| city.equalsIgnoreCase("Tartu")) {
             switch (vehicleType.toLowerCase()) {
                 case "car":
                     return 3.5;
@@ -121,4 +151,5 @@ public class DeliveryFeeService {
         }
         return 0;
     }
+
 }
