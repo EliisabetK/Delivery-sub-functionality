@@ -7,33 +7,38 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+/**
+ * Service class for calculating delivery fees based on weather conditions and vehicle type.
+ */
 @Service
 public class DeliveryFeeService {
 
     private final WeatherDataRepository weatherDataRepository;
 
     /**
+     * Constructs a new DeliveryFeeService with the provided WeatherDataRepository.
      *
-     * @param weatherDataRepository
+     * @param weatherDataRepository the WeatherDataRepository to be used for fetching weather data
      */
     public DeliveryFeeService(WeatherDataRepository weatherDataRepository) {
         this.weatherDataRepository = weatherDataRepository;
     }
 
     /**
+     * Calculates the delivery fee for the given city and vehicle type.
      *
-     * @param city
-     * @param vehicleType
-     * @return
+     * @param city        the city for which the delivery fee is to be calculated
+     * @param vehicleType the type of vehicle used for delivery (car, scooter, bike)
+     * @return the calculated delivery fee
+     * @throws IllegalArgumentException if no weather data is found for the specified city
      */
-
     public double calculateDeliveryFee(String city, String vehicleType) {
         if(city.equals("Tallinn"))
             city += "-Harku";
         else if(city.equals("Tartu"))
             city += "-Tõravere";
 
-        WeatherData weatherData = weatherDataRepository.findLatestByStationName(city);
+        WeatherData weatherData = weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(city);
         if (weatherData == null) {
             throw new IllegalArgumentException("No weather data found for the station: " + city);
         }
@@ -41,11 +46,13 @@ public class DeliveryFeeService {
     }
 
     /**
+     * Calculates the delivery fee for the given city, vehicle type, and date/time.
      *
-     * @param city
-     * @param vehicleType
-     * @param dateTime
-     * @return
+     * @param city        the city for which the delivery fee is to be calculated
+     * @param vehicleType the type of vehicle used for delivery (car, scooter, bike)
+     * @param dateTime    the date and time for which the weather data is to be considered
+     * @return the calculated delivery fee
+     * @throws IllegalArgumentException if no weather data is found for the specified city and date/time
      */
     public double calculateDeliveryFee(String city, String vehicleType, LocalDateTime dateTime) {
         if(city.equals("Tallinn"))
@@ -62,11 +69,13 @@ public class DeliveryFeeService {
     }
 
     /**
+     * Calculates the delivery fee for the given city, vehicle type, and weather data.
+     * This method is a helper method used by other public methods in this class.
      *
-     * @param city
-     * @param vehicleType
-     * @param weatherData
-     * @return
+     * @param city         the city for which the delivery fee is to be calculated
+     * @param vehicleType  the type of vehicle used for delivery (car, scooter, bike)
+     * @param weatherData  the weather data for the specified city
+     * @return the calculated delivery fee
      */
 
     private double calculateDeliveryFeeExtracted(String city, String vehicleType, WeatherData weatherData) {
@@ -79,13 +88,6 @@ public class DeliveryFeeService {
         }
         return rbf + atef + wsef + wpef;
     }
-
-    /**
-     *
-     * @param city
-     * @param vehicleType
-     * @return
-     */
     private double findRegionalBaseFee(String city, String vehicleType) {
         if (city.equalsIgnoreCase("Tallinn-Harku") || city.equalsIgnoreCase("Tallinn")) {
             switch (vehicleType.toLowerCase()) {
@@ -139,7 +141,7 @@ public class DeliveryFeeService {
         return 0;
     }
 
-    private double calculateWeatherPhenomenonExtraFee(String vehicleType, String weatherPhenomenon) {
+    private double calculateWeatherPhenomenonExtraFee(String vehicleType, String weatherPhenomenon) { // Calculates the WPEF according to the business rules
         if (vehicleType.equalsIgnoreCase("scooter") || vehicleType.equalsIgnoreCase("bike")) {
             if (weatherPhenomenon.contains("snow") || weatherPhenomenon.contains("sleet")) {
                 return 1.0;
@@ -151,5 +153,4 @@ public class DeliveryFeeService {
         }
         return 0;
     }
-
 }

@@ -18,13 +18,6 @@ public class WeatherData {
     /**
      * Getters and setter for all the information that is collected
      */
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getStationName() {
         return stationName;

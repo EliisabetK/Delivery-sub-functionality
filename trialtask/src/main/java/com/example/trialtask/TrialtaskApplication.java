@@ -13,11 +13,10 @@ import java.time.ZoneOffset;
 public class TrialtaskApplication {
 
 	public static void main(String[] args) {
-
-		long unixTimestamp = 1709650800L;
+		long unixTimestamp = 1709658000L;
 		LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(unixTimestamp), ZoneOffset.UTC);
 		System.out.println("DateTime: " + dateTime);
-
+		System.out.println("Interface to get delivery fees: http://localhost:8080/swagger-ui/index.html");
 		SpringApplication.run(TrialtaskApplication.class, args);
 
 	}

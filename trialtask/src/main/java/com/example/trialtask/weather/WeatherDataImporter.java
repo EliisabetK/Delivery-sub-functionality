@@ -8,7 +8,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
@@ -34,7 +33,7 @@ public class WeatherDataImporter {
      * Imports weather data from the website every hour at 15 minutes past the hour
      * Only gets data from the stations "Tallinn-Harku", "Pärnu", and "Tartu-Tõravere".
      */
-    @Scheduled(cron = "0 00 * * * *") // change this to configure the frequency
+    @Scheduled(cron = "${weather.import.cron}")// the frequency can be configured in the application.properties file at src/main/resources/application.properties
     public void importWeatherData() {
         try {
             String xmlData = restTemplate.getForObject(weatherDataUrl, String.class);
