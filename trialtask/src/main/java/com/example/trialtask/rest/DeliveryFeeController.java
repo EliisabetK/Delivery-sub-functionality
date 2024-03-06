@@ -1,6 +1,7 @@
 package com.example.trialtask.rest;
 
 import com.example.trialtask.delivery.DeliveryFeeService;
+import com.example.trialtask.feesCRUD.DeliveryFeeServiceCRUD;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,10 +20,10 @@ import java.time.LocalDateTime;
 @RequestMapping("/delivery-fees")
 public class DeliveryFeeController {
 
-    private final DeliveryFeeService deliveryFeeService;
+    private final DeliveryFeeServiceCRUD deliveryFeeServiceCRUD;
 
-    public DeliveryFeeController(DeliveryFeeService deliveryFeeService) {
-        this.deliveryFeeService = deliveryFeeService;
+    public DeliveryFeeController(DeliveryFeeServiceCRUD deliveryFeeServiceCRUD) {
+        this.deliveryFeeServiceCRUD = deliveryFeeServiceCRUD;
     }
 
     @Operation(summary = "Calculate delivery fee", description = "Calculate the delivery fee for a given city and vehicle type at a specified time (time has to be in the format of YYYY-MM-DDThh:mm.")
@@ -39,9 +40,9 @@ public class DeliveryFeeController {
         try {
             double fee;
             if (dateTime == null) {
-                fee = deliveryFeeService.calculateDeliveryFee(city, vehicleType);
+                fee = deliveryFeeServiceCRUD.calculateDeliveryFee(city, vehicleType);
             } else {
-                fee = deliveryFeeService.calculateDeliveryFee(city, vehicleType, dateTime);
+                fee = deliveryFeeServiceCRUD.calculateDeliveryFee(city, vehicleType, dateTime);
             }
             return ResponseEntity.ok(fee);
         } catch (Exception e) {

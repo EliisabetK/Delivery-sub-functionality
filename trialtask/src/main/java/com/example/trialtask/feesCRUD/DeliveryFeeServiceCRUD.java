@@ -1,7 +1,5 @@
-package com.example.trialtask.delivery;
+package com.example.trialtask.feesCRUD;
 
-import com.example.trialtask.feesCRUD.BaseFee;
-import com.example.trialtask.feesCRUD.BaseFeeRepository;
 import com.example.trialtask.weather.WeatherData;
 import com.example.trialtask.weather.WeatherDataRepository;
 import org.springframework.stereotype.Service;
@@ -13,7 +11,7 @@ import java.time.ZoneOffset;
  * Service class for calculating delivery fees based on weather conditions and vehicle type.
  */
 @Service
-public class DeliveryFeeService {
+public class DeliveryFeeServiceCRUD {
 
     private final WeatherDataRepository weatherDataRepository;
     private final BaseFeeRepository baseFeeRepository;
@@ -23,7 +21,8 @@ public class DeliveryFeeService {
      *
      * @param weatherDataRepository the WeatherDataRepository to be used for fetching weather data
      */
-    public DeliveryFeeService(WeatherDataRepository weatherDataRepository, BaseFeeRepository baseFeeRepository) {
+
+    public DeliveryFeeServiceCRUD(WeatherDataRepository weatherDataRepository, BaseFeeRepository baseFeeRepository) {
         this.weatherDataRepository = weatherDataRepository;
         this.baseFeeRepository = baseFeeRepository;
     }
@@ -93,35 +92,11 @@ public class DeliveryFeeService {
         return rbf + atef + wsef + wpef;
     }
     private double findRegionalBaseFee(String city, String vehicleType) {
-        if (city.equalsIgnoreCase("Tallinn-Harku") || city.equalsIgnoreCase("Tallinn")) {
-            switch (vehicleType.toLowerCase()) {
-                case "car":
-                    return 4.0;
-                case "scooter":
-                    return 3.5;
-                case "bike":
-                    return 3.0;
-            }
-        } else if (city.equalsIgnoreCase("Tartu-Tõravere")|| city.equalsIgnoreCase("Tartu")) {
-            switch (vehicleType.toLowerCase()) {
-                case "car":
-                    return 3.5;
-                case "scooter":
-                    return 3.0;
-                case "bike":
-                    return 2.5;
-            }
-        } else if (city.equalsIgnoreCase("Pärnu")) {
-            switch (vehicleType.toLowerCase()) {
-                case "car":
-                    return 3;
-                case "scooter":
-                    return 2.5;
-                case "bike":
-                    return 2.0;
-            }
+        BaseFee baseFee = baseFeeRepository.findByCityAndVehicleType(city.split("-")[0], vehicleType); // The city parameter is the same as the weather-data table, so only the first part is needed
+        if (baseFee == null) {
+            throw new IllegalArgumentException("No base fee found for the city: " + city + " and vehicle type: " + vehicleType);
         }
-        throw new IllegalArgumentException("Invalid city or vehicle type");
+        return baseFee.getFee();
     }
     private double calculateAirTemperatureExtraFee(String vehicleType, double temperature) {
         if (vehicleType.equalsIgnoreCase("scooter") || vehicleType.equalsIgnoreCase("bike")) {
