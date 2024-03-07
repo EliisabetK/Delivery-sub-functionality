@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Arrays;
 
 //TODO: Implement errors for “Usage of selected vehicle type is forbidden” for certain weather conditions
 
@@ -41,11 +42,11 @@ public class DeliveryFeeServiceCRUD {
      * @throws IllegalArgumentException if no weather data is found for the specified city
      */
     public double calculateDeliveryFee(String city, String vehicleType) {
-        if (city.equals("Tallinn"))
-            city += "-Harku";
-        else if (city.equals("Tartu"))
-            city += "-Tõravere";
+        city = checkParameters(city, vehicleType);
 
+        if (!isValidVehicleType(vehicleType)) {
+            throw new IllegalArgumentException("Invalid vehicle type: " + vehicleType);
+        }
         WeatherData weatherData = weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(city);
         if (weatherData == null) {
             throw new IllegalArgumentException("No weather data found for the station: " + city);
@@ -63,10 +64,7 @@ public class DeliveryFeeServiceCRUD {
      * @throws IllegalArgumentException if no weather data is found for the specified city and date/time
      */
     public double calculateDeliveryFee(String city, String vehicleType, LocalDateTime dateTime) {
-        if(city.equals("Tallinn"))
-            city += "-Harku";
-        else if(city.equals("Tartu"))
-            city += "-Tõravere";
+        city = checkParameters(city, vehicleType);
         long observationTimestamp = dateTime.toEpochSecond(ZoneOffset.UTC);
         WeatherData weatherData = weatherDataRepository.findByStationNameAndObservationTimestamp(city, observationTimestamp);
         if (weatherData == null) {
@@ -74,6 +72,20 @@ public class DeliveryFeeServiceCRUD {
         }
 
         return calculateDeliveryFeeExtracted(city, vehicleType, weatherData);
+    }
+
+    private String checkParameters(String city, String vehicleType) {
+        if (city == null) {
+            throw new IllegalArgumentException("City cannot be null");
+        }
+        if (vehicleType == null) {
+            throw new IllegalArgumentException("Vehicle type cannot be null");
+        }
+        if(city.equals("Tallinn"))
+            city += "-Harku";
+        else if(city.equals("Tartu"))
+            city += "-Tõravere";
+        return city;
     }
 
     /**
@@ -93,8 +105,7 @@ public class DeliveryFeeServiceCRUD {
         if (weatherData.getPhenomenon() != null && !weatherData.getPhenomenon().equals("")) {
             wpef = calculateWeatherPhenomenonExtraFee(vehicleType, weatherData.getPhenomenon());
         }
-        System.out.println(rbf+ " "+ atef+ " "+ wpef);
-        return rbf + atef + wpef;
+        return rbf + atef + wsef + wpef;
     }
     private double findRegionalBaseFee(String city, String vehicleType) {
         BaseFee baseFee = baseFeeRepository.findByCityAndVehicleType(city.split("-")[0], vehicleType); // The city parameter is the same as the weather-data table, so only the first part is needed
@@ -126,7 +137,8 @@ public class DeliveryFeeServiceCRUD {
     private double calculateWeatherPhenomenonExtraFee(String vehicleType, String weatherPhenomenon) {
         List<ExtraFee> extraFees = extraFeeRepository.findByConditionTypeAndVehicleType("Weather Phenomenon", vehicleType);
         for (ExtraFee extraFee : extraFees) {
-            if (extraFee.getConditionValue().contains(weatherPhenomenon)) {
+            String conditionValue = extraFee.getConditionValue();
+            if (conditionValue != null && conditionValue.contains(weatherPhenomenon)) {
                 return extraFee.getExtraFee();
             }
         }
@@ -134,8 +146,8 @@ public class DeliveryFeeServiceCRUD {
     }
 
     private boolean evaluateCondition(String condition, double value) {
+        if(condition != null){
         String[] parts = condition.split(" ");
-        System.out.println(parts.length);
         if (parts.length == 2) {
             if (parts[0].equals("<")) {
                 return value < Double.parseDouble(parts[1]);
@@ -147,5 +159,10 @@ public class DeliveryFeeServiceCRUD {
         }
         return false;
     }
-
+        return false;
+    }
+    private boolean isValidVehicleType(String vehicleType) {
+        List<String> validVehicleTypes = Arrays.asList("car", "scooter", "bike");
+        return validVehicleTypes.contains(vehicleType.toLowerCase());
+    }
 }

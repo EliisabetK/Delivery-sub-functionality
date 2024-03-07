@@ -18,6 +18,16 @@ public class ExtraFee {
     private Double extraFee;
 
     private String vehicleType;
+    public ExtraFee() {
+    }
+
+    public ExtraFee(String conditionType, String conditionValue, double extraFee, String vehicleType) {
+        this.conditionType = conditionType;
+        this.conditionValue = conditionValue;
+        this.extraFee = extraFee;
+        this.vehicleType = vehicleType;
+    }
+
 
     public Long getId() {
         return id;
