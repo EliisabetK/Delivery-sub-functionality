@@ -16,17 +16,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-/*TODO:
- * 1. Test for calculating delivery fee with valid input parameters
- * 2. Test for calculating delivery fee with invalid input parameters:
- * 3. Test for handling missing weather data:
- * 4. Test for CronJob functionality
- * 5. Test for error handling in CronJob
- * 6. Test for CRUD operations on base fees and extra fees
- * 7. Test for REST interface
- * 8. Test for datetime parameter
- */
-
 class DeliveryFeeServiceCRUDTest {
 
 	@Mock
