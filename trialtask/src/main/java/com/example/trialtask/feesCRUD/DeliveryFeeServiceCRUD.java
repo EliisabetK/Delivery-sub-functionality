@@ -6,13 +6,17 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
+
+//TODO: Implement errors for “Usage of selected vehicle type is forbidden” for certain weather conditions
 
 /**
  * Service class for calculating delivery fees based on weather conditions and vehicle type.
+ * Uses business rules from the database.
  */
 @Service
 public class DeliveryFeeServiceCRUD {
-
+    private ExtraFeeRepository extraFeeRepository;
     private final WeatherDataRepository weatherDataRepository;
     private final BaseFeeRepository baseFeeRepository;
 
@@ -22,7 +26,8 @@ public class DeliveryFeeServiceCRUD {
      * @param weatherDataRepository the WeatherDataRepository to be used for fetching weather data
      */
 
-    public DeliveryFeeServiceCRUD(WeatherDataRepository weatherDataRepository, BaseFeeRepository baseFeeRepository) {
+    public DeliveryFeeServiceCRUD(WeatherDataRepository weatherDataRepository, BaseFeeRepository baseFeeRepository, ExtraFeeRepository extraFeeRepository) {
+        this.extraFeeRepository = extraFeeRepository;
         this.weatherDataRepository = weatherDataRepository;
         this.baseFeeRepository = baseFeeRepository;
     }
@@ -36,9 +41,9 @@ public class DeliveryFeeServiceCRUD {
      * @throws IllegalArgumentException if no weather data is found for the specified city
      */
     public double calculateDeliveryFee(String city, String vehicleType) {
-        if(city.equals("Tallinn"))
+        if (city.equals("Tallinn"))
             city += "-Harku";
-        else if(city.equals("Tartu"))
+        else if (city.equals("Tartu"))
             city += "-Tõravere";
 
         WeatherData weatherData = weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(city);
@@ -73,7 +78,6 @@ public class DeliveryFeeServiceCRUD {
 
     /**
      * Calculates the delivery fee for the given city, vehicle type, and weather data.
-     * This method is a helper method used by other public methods in this class.
      *
      * @param city         the city for which the delivery fee is to be calculated
      * @param vehicleType  the type of vehicle used for delivery (car, scooter, bike)
@@ -86,10 +90,11 @@ public class DeliveryFeeServiceCRUD {
         double atef = calculateAirTemperatureExtraFee(vehicleType, weatherData.getAirTemperature());
         double wsef = calculateWindSpeedExtraFee(vehicleType, weatherData.getWindSpeed());
         double wpef = 0;
-        if (weatherData.getPhenomenon() != null) {
+        if (weatherData.getPhenomenon() != null && !weatherData.getPhenomenon().equals("")) {
             wpef = calculateWeatherPhenomenonExtraFee(vehicleType, weatherData.getPhenomenon());
         }
-        return rbf + atef + wsef + wpef;
+        System.out.println(rbf+ " "+ atef+ " "+ wpef);
+        return rbf + atef + wpef;
     }
     private double findRegionalBaseFee(String city, String vehicleType) {
         BaseFee baseFee = baseFeeRepository.findByCityAndVehicleType(city.split("-")[0], vehicleType); // The city parameter is the same as the weather-data table, so only the first part is needed
@@ -98,38 +103,49 @@ public class DeliveryFeeServiceCRUD {
         }
         return baseFee.getFee();
     }
-    private double calculateAirTemperatureExtraFee(String vehicleType, double temperature) {
-        if (vehicleType.equalsIgnoreCase("scooter") || vehicleType.equalsIgnoreCase("bike")) {
-            if (temperature < -10) {
-                return 1.0;
-            } else if (temperature < 0) {
-                return 0.5;
+
+    private double calculateAirTemperatureExtraFee(String vehicleType, double airTemperature) {
+        List<ExtraFee> extraFees = extraFeeRepository.findByConditionTypeAndVehicleType("Air Temperature", vehicleType);
+        for (ExtraFee extraFee : extraFees) {
+            if (evaluateCondition(extraFee.getConditionValue(), airTemperature)) {
+                return extraFee.getExtraFee();
             }
         }
-        return 0;
+        return 0.0;
     }
-
     private double calculateWindSpeedExtraFee(String vehicleType, double windSpeed) {
-        if (vehicleType.equalsIgnoreCase("bike")) {
-            if (windSpeed > 20) {
-                throw new IllegalArgumentException("Usage of selected vehicle type is forbidden");
-            } else if (windSpeed > 10) {
-                return 0.5;
+        List<ExtraFee> extraFees = extraFeeRepository.findByConditionTypeAndVehicleType("Wind Speed", vehicleType);
+        for (ExtraFee extraFee : extraFees) {
+            if (evaluateCondition(extraFee.getConditionValue(), windSpeed)) {
+                return extraFee.getExtraFee();
             }
         }
-        return 0;
+        return 0.0;
     }
 
-    private double calculateWeatherPhenomenonExtraFee(String vehicleType, String weatherPhenomenon) { // Calculates the WPEF according to the business rules
-        if (vehicleType.equalsIgnoreCase("scooter") || vehicleType.equalsIgnoreCase("bike")) {
-            if (weatherPhenomenon.contains("snow") || weatherPhenomenon.contains("sleet")) {
-                return 1.0;
-            } else if (weatherPhenomenon.contains("rain")) {
-                return 0.5;
-            } else if (weatherPhenomenon.contains("glaze") || weatherPhenomenon.contains("hail") || weatherPhenomenon.contains("thunder")) {
-                throw new IllegalArgumentException("Usage of selected vehicle type is forbidden");
+    private double calculateWeatherPhenomenonExtraFee(String vehicleType, String weatherPhenomenon) {
+        List<ExtraFee> extraFees = extraFeeRepository.findByConditionTypeAndVehicleType("Weather Phenomenon", vehicleType);
+        for (ExtraFee extraFee : extraFees) {
+            if (extraFee.getConditionValue().contains(weatherPhenomenon)) {
+                return extraFee.getExtraFee();
             }
         }
-        return 0;
+        return 0.0;
     }
+
+    private boolean evaluateCondition(String condition, double value) {
+        String[] parts = condition.split(" ");
+        System.out.println(parts.length);
+        if (parts.length == 2) {
+            if (parts[0].equals("<")) {
+                return value < Double.parseDouble(parts[1]);
+            } else if (parts[0].equals(">")) {
+                return value > Double.parseDouble(parts[1]);
+            }
+        } else if (parts.length == 5) {
+            return value >= Double.parseDouble(parts[1]) && value < Double.parseDouble(parts[4]);
+        }
+        return false;
+    }
+
 }

@@ -11,6 +11,7 @@ import java.time.ZoneOffset;
 
 /**
  * Service class for calculating delivery fees based on weather conditions and vehicle type.
+ * Not used in the project, it is replaced by DeliveryFeeServiceCRUD.java
  */
 @Service
 public class DeliveryFeeService {
