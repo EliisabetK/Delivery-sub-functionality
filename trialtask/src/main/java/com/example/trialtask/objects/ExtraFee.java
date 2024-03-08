@@ -1,14 +1,13 @@
-package com.example.trialtask.feesCRUD;
+package com.example.trialtask.objects;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "extra_fees")
 public class ExtraFee {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private String conditionType;
@@ -26,15 +25,6 @@ public class ExtraFee {
         this.conditionValue = conditionValue;
         this.extraFee = extraFee;
         this.vehicleType = vehicleType;
-    }
-
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getConditionType() {

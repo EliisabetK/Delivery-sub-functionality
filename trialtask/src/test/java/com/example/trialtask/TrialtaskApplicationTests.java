@@ -1,14 +1,17 @@
 package com.example.trialtask;
-import com.example.trialtask.feesCRUD.*;
-import com.example.trialtask.weather.WeatherData;
-import com.example.trialtask.weather.WeatherDataRepository;
+import com.example.trialtask.objects.BaseFee;
+import com.example.trialtask.objects.ExtraFee;
+import com.example.trialtask.repositories.BaseFeeRepository;
+import com.example.trialtask.repositories.ExtraFeeRepository;
+import com.example.trialtask.services.DeliveryFeeServiceCRUD;
+import com.example.trialtask.objects.WeatherData;
+import com.example.trialtask.repositories.WeatherDataRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,7 +71,7 @@ class DeliveryFeeServiceCRUDTest {
 		WeatherData weatherData = new WeatherData();
 		weatherData.setAirTemperature(20.0);
 		weatherData.setWindSpeed(15.0);
-		weatherData.setPhenomenon("Clear");
+		weatherData.setPhenomenon("");
 
 		when(weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(any())).thenReturn(weatherData);
 		when(baseFeeRepository.findByCityAndVehicleType(any(), any())).thenReturn(new BaseFee());
@@ -81,19 +84,53 @@ class DeliveryFeeServiceCRUDTest {
 	}
 
 	@Test
+	void calculateDeliveryFee_ExtraFeeForTooHighWind() {
+		WeatherData weatherData = new WeatherData();
+		weatherData.setAirTemperature(20.0);
+		weatherData.setWindSpeed(25.0);
+		weatherData.setPhenomenon("");
+		when(weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(any())).thenReturn(weatherData);
+		when(baseFeeRepository.findByCityAndVehicleType(any(), any())).thenReturn(new BaseFee());
+		when(extraFeeRepository.findByConditionTypeAndVehicleType("Wind Speed", "Scooter"))
+				.thenReturn(Collections.singletonList(new ExtraFee("Wind Speed", "> 20", -1000, "Scooter")));
+
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> deliveryFeeService.calculateDeliveryFee("Tallinn", "Scooter")
+		);
+		assertEquals("Usage of selected vehicle type is forbidden.", exception.getMessage());
+	}
+
+	@Test
+	void calculateDeliveryFee_ForbiddenWeather() {
+		WeatherData weatherData = new WeatherData();
+		weatherData.setAirTemperature(20.0);
+		weatherData.setWindSpeed(5.0);
+		weatherData.setPhenomenon("Glaze");
+		when(weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(any())).thenReturn(weatherData);
+		when(baseFeeRepository.findByCityAndVehicleType(any(), any())).thenReturn(new BaseFee());
+		when(extraFeeRepository.findByConditionTypeAndVehicleType("Weather Phenomenon", "Scooter"))
+				.thenReturn(Collections.singletonList(new ExtraFee("Weather Phenomenon", "Glaze", -1000, "Scooter")));
+
+		IllegalArgumentException exception = assertThrows(
+				IllegalArgumentException.class,
+				() -> deliveryFeeService.calculateDeliveryFee("Tallinn", "Scooter")
+		);
+		assertEquals("Usage of selected vehicle type is forbidden.", exception.getMessage());
+	}
+
+	@Test
 	void calculateDeliveryFee_ExtraFeeForWeatherPhenomenon() {
 		WeatherData weatherData = new WeatherData();
 		weatherData.setAirTemperature(20.0);
 		weatherData.setWindSpeed(5.0);
 		weatherData.setPhenomenon("Rain");
-
 		when(weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(any())).thenReturn(weatherData);
 		when(baseFeeRepository.findByCityAndVehicleType(any(), any())).thenReturn(new BaseFee());
 		when(extraFeeRepository.findByConditionTypeAndVehicleType("Weather Phenomenon", "Bike"))
 				.thenReturn(Collections.singletonList(new ExtraFee("Weather Phenomenon", "Rain", 0.5, "Bike")));
 
 		double deliveryFee = deliveryFeeService.calculateDeliveryFee("Tallinn", "Bike");
-
 		assertEquals(0.5, deliveryFee);
 	}
 	@Test

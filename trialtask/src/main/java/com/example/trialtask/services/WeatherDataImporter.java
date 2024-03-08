@@ -1,5 +1,7 @@
-package com.example.trialtask.weather;
+package com.example.trialtask.services;
 
+import com.example.trialtask.objects.WeatherData;
+import com.example.trialtask.repositories.WeatherDataRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;

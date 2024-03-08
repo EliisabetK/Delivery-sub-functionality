@@ -1,4 +1,4 @@
-package com.example.trialtask.weather;
+package com.example.trialtask.objects;
 
 import jakarta.persistence.*;
 

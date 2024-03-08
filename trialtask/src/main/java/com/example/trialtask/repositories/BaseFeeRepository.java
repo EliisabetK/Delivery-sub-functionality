@@ -1,6 +1,6 @@
-package com.example.trialtask.feesCRUD;
+package com.example.trialtask.repositories;
 
-import jakarta.persistence.*;
+import com.example.trialtask.objects.BaseFee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

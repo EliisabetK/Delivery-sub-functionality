@@ -1,5 +1,6 @@
-package com.example.trialtask.weather;
+package com.example.trialtask.repositories;
 
+import com.example.trialtask.objects.WeatherData;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

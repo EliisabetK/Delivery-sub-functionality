@@ -1,7 +1,6 @@
-package com.example.trialtask.rest;
+package com.example.trialtask.controllers;
 
-import com.example.trialtask.delivery.DeliveryFeeService;
-import com.example.trialtask.feesCRUD.DeliveryFeeServiceCRUD;
+import com.example.trialtask.services.DeliveryFeeServiceCRUD;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -15,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDateTime;
 
-//TODO: Improve documentation
-
 // Interface is available here: http://localhost:8080/swagger-ui/index.html
 @RestController
 @RequestMapping("/delivery-fees")
@@ -28,7 +25,7 @@ public class DeliveryFeeController {
         this.deliveryFeeServiceCRUD = deliveryFeeServiceCRUD;
     }
 
-    @Operation(summary = "Calculate delivery fee", description = "Calculate the delivery fee for a given city and vehicle type at a specified time (time has to be in the format of YYYY-MM-DDThh:mm.")
+    @Operation(summary = "Calculate delivery fee", description = "Calculate the delivery fee for a given city and vehicle type at a specified time (time has to be in the format of YYYY-MM-DDThh:mm).")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Delivery fee calculation successful"),
             @ApiResponse(responseCode = "400", description = "Invalid input parameters")

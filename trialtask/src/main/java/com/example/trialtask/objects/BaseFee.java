@@ -1,4 +1,4 @@
-package com.example.trialtask.feesCRUD;
+package com.example.trialtask.objects;
 
 import jakarta.persistence.*;
 
@@ -7,18 +7,9 @@ import jakarta.persistence.*;
 public class BaseFee {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
     private String city;
     private String vehicleType;
     private double fee;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getCity() {
         return city;

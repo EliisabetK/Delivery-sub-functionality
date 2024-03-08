@@ -1,15 +1,18 @@
-package com.example.trialtask.feesCRUD;
+package com.example.trialtask.services;
 
-import com.example.trialtask.weather.WeatherData;
-import com.example.trialtask.weather.WeatherDataRepository;
+import com.example.trialtask.repositories.ExtraFeeRepository;
+import com.example.trialtask.objects.BaseFee;
+import com.example.trialtask.objects.ExtraFee;
+import com.example.trialtask.repositories.BaseFeeRepository;
+import com.example.trialtask.objects.WeatherData;
+import com.example.trialtask.repositories.WeatherDataRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Arrays;
-
-//TODO: Implement errors for “Usage of selected vehicle type is forbidden” for certain weather conditions
 
 /**
  * Service class for calculating delivery fees based on weather conditions and vehicle type.
@@ -55,7 +58,7 @@ public class DeliveryFeeServiceCRUD {
     }
 
     /**
-     * Calculates the delivery fee for the given city, vehicle type, and date/time.
+     * Calculates the delivery fee for the given city, vehicle type, and datetime.
      *
      * @param city        the city for which the delivery fee is to be calculated
      * @param vehicleType the type of vehicle used for delivery (car, scooter, bike)
@@ -65,13 +68,16 @@ public class DeliveryFeeServiceCRUD {
      */
     public double calculateDeliveryFee(String city, String vehicleType, LocalDateTime dateTime) {
         city = checkParameters(city, vehicleType);
-        long observationTimestamp = dateTime.toEpochSecond(ZoneOffset.UTC);
-        WeatherData weatherData = weatherDataRepository.findByStationNameAndObservationTimestamp(city, observationTimestamp);
-        if (weatherData == null) {
-            throw new IllegalArgumentException("No weather data found for the station: " + city + " at the specified date and time.");
+        try {
+            long observationTimestamp = dateTime.toEpochSecond(ZoneOffset.UTC);
+            WeatherData weatherData = weatherDataRepository.findByStationNameAndObservationTimestamp(city, observationTimestamp);
+            if (weatherData == null) {
+                throw new IllegalArgumentException("No weather data found for the station: " + city + " at the specified date and time.");
+            }
+            return calculateDeliveryFeeExtracted(city, vehicleType, weatherData);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid dateTime parameter format: " + dateTime);
         }
-
-        return calculateDeliveryFeeExtracted(city, vehicleType, weatherData);
     }
 
     private String checkParameters(String city, String vehicleType) {
@@ -105,6 +111,10 @@ public class DeliveryFeeServiceCRUD {
         if (weatherData.getPhenomenon() != null && !weatherData.getPhenomenon().equals("")) {
             wpef = calculateWeatherPhenomenonExtraFee(vehicleType, weatherData.getPhenomenon());
         }
+        if (wsef == -1000 || wpef == -1000) {
+            throw new IllegalArgumentException("Usage of selected vehicle type is forbidden.");
+        }
+
         return rbf + atef + wsef + wpef;
     }
     private double findRegionalBaseFee(String city, String vehicleType) {

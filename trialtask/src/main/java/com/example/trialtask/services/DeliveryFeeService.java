@@ -1,9 +1,8 @@
-package com.example.trialtask.delivery;
+package com.example.trialtask.services;
 
-import com.example.trialtask.feesCRUD.BaseFee;
-import com.example.trialtask.feesCRUD.BaseFeeRepository;
-import com.example.trialtask.weather.WeatherData;
-import com.example.trialtask.weather.WeatherDataRepository;
+import com.example.trialtask.repositories.BaseFeeRepository;
+import com.example.trialtask.objects.WeatherData;
+import com.example.trialtask.repositories.WeatherDataRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
