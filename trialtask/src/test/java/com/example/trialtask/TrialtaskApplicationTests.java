@@ -12,11 +12,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 class DeliveryFeeServiceCRUDTest {
@@ -133,6 +136,29 @@ class DeliveryFeeServiceCRUDTest {
 		double deliveryFee = deliveryFeeService.calculateDeliveryFee("Tallinn", "Bike");
 		assertEquals(0.5, deliveryFee);
 	}
+
+	@Test
+	void calculateDeliveryFee_MultipleWeatherPhenomenons() {
+		WeatherData weatherData = new WeatherData();
+		weatherData.setAirTemperature(-13.0);
+		weatherData.setWindSpeed(15.0);
+		BaseFee baseFee = new BaseFee();
+		baseFee.setFee(3.0);
+		weatherData.setPhenomenon("Light snowfall");
+
+		when(weatherDataRepository.findFirstByStationNameOrderByObservationTimestampDesc(any())).thenReturn(weatherData);
+		when(baseFeeRepository.findByCityAndVehicleType(any(), any())).thenReturn(baseFee);
+
+		List<ExtraFee> extraFees = new ArrayList<>();
+		extraFees.add(new ExtraFee("Weather Phenomenon", "Snow or Sleet", 1.0, "Bike"));
+		extraFees.add(new ExtraFee("Wind Speed", ">= 10 and < 20", 0.5, "Bike"));
+		extraFees.add(new ExtraFee("Air Temperature", "< -10", 1.0, "Bike"));
+		when(extraFeeRepository.findByConditionTypeAndVehicleType(any(), any())).thenReturn(extraFees);
+
+		double deliveryFee = deliveryFeeService.calculateDeliveryFee("Tallinn", "Bike");
+		assertEquals(5.5, deliveryFee); // 3.0 + 1 + 0.5 + 1.0
+	}
+
 	@Test
 	void calculateDeliveryFee_InvalidInputParameters() {
 		IllegalArgumentException exception = assertThrows(

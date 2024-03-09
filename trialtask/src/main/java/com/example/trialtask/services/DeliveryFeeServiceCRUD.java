@@ -148,8 +148,14 @@ public class DeliveryFeeServiceCRUD {
         List<ExtraFee> extraFees = extraFeeRepository.findByConditionTypeAndVehicleType("Weather Phenomenon", vehicleType);
         for (ExtraFee extraFee : extraFees) {
             String conditionValue = extraFee.getConditionValue();
-            if (conditionValue != null && conditionValue.contains(weatherPhenomenon)) {
-                return extraFee.getExtraFee();
+            if(conditionValue != null) {
+                String[] conditions = conditionValue.toLowerCase().split("[,\\s]+");
+                for(String condition : conditions) {
+                    condition = condition.replaceAll("or", "").trim();
+                    if(weatherPhenomenon.toLowerCase().contains(condition)) {
+                        return extraFee.getExtraFee();
+                    }
+                }
             }
         }
         return 0.0;
