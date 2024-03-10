@@ -2,15 +2,22 @@ package com.example.trialtask.objects;
 
 import jakarta.persistence.*;
 
-@Table(name = "base_fee")
 @Entity
+@Table(name = "base_fee")
 public class BaseFee {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
     private String city;
+
     private String vehicleType;
+
     private double fee;
 
+    /**
+     * Getters and setter for all the information that is collected
+     */
     public String getCity() {
         return city;
     }

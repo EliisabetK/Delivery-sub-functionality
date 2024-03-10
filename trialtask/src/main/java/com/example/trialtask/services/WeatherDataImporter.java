@@ -10,6 +10,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.StringReader;
@@ -23,7 +24,7 @@ public class WeatherDataImporter {
 
     /**
      * Constructs a new WeatherDataImporter with RestTemplate and WeatherDataRepository.
-     * @param restTemplate RestTemplate used to make HTTP requests
+     * @param restTemplate RestTemplate used to make the HTTP requests
      * @param weatherDataRepository repository used to save the imported weather data
      */
     public WeatherDataImporter(RestTemplate restTemplate, WeatherDataRepository weatherDataRepository) {
@@ -33,17 +34,21 @@ public class WeatherDataImporter {
 
     /**
      * Imports weather data from the website every hour at 15 minutes past the hour
-     * Only gets data from the stations "Tallinn-Harku", "Pärnu", and "Tartu-Tõravere".
+     * Only gets data from the stations "Tallinn-Harku", "Pärnu" and "Tartu-Tõravere"
      */
-    @Scheduled(cron = "${weather.import.cron}")// the frequency can be configured in the application.properties file at src/main/resources/application.properties
+    @Scheduled(cron = "${weather.import.cron}") // the frequency can be configured in the application.properties file at src/main/resources/application.properties
     public void importWeatherData() {
         try {
+            // gets the XML data from the weather data URL
             String xmlData = restTemplate.getForObject(weatherDataUrl, String.class);
+
+            // parses the XML data
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(new InputSource(new StringReader(xmlData)));
             doc.getDocumentElement().normalize();
 
+            // gets the list of station nodes from the XML document
             NodeList nodeList = doc.getElementsByTagName("station");
 
             for (int i = 0; i < nodeList.getLength(); i++) {
@@ -51,8 +56,10 @@ public class WeatherDataImporter {
                 if (node.getNodeType() == Node.ELEMENT_NODE) {
                     Element element = (Element) node;
 
+                    // extracts data from the station node
                     String stationName = element.getElementsByTagName("name").item(0).getTextContent();
 
+                    // checks if the station is one of the specified stations
                     if (stationName.equals("Tallinn-Harku") || stationName.equals("Pärnu") || stationName.equals("Tartu-Tõravere")) {
                         String wmocode = element.getElementsByTagName("wmocode").item(0).getTextContent();
                         String airTemperatureString = element.getElementsByTagName("airtemperature").item(0).getTextContent();
@@ -63,6 +70,7 @@ public class WeatherDataImporter {
                         String observationTimestampString = doc.getDocumentElement().getAttribute("timestamp");
                         Long observationTimestamp = observationTimestampString.isEmpty() ? 0L : Long.parseLong(observationTimestampString);
 
+                        // creates a new WeatherData object with the extracted data
                         WeatherData weatherData = new WeatherData();
                         weatherData.setStationName(stationName);
                         weatherData.setWmocode(wmocode);
@@ -71,6 +79,7 @@ public class WeatherDataImporter {
                         weatherData.setPhenomenon(phenomenon);
                         weatherData.setObservationTimestamp(observationTimestamp);
 
+                        // saves the WeatherData object to the repository
                         weatherDataRepository.save(weatherData);
                     }
                 }

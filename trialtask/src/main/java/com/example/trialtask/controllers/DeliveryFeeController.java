@@ -24,18 +24,24 @@ public class DeliveryFeeController {
     public DeliveryFeeController(DeliveryFeeServiceCRUD deliveryFeeServiceCRUD) {
         this.deliveryFeeServiceCRUD = deliveryFeeServiceCRUD;
     }
-
+    /**
+     * Calculates the delivery fee for a given city and vehicle type at a specified time
+     * @param city        Name of the city
+     * @param vehicleType Type of vehicle
+     * @param dateTime    Date and time of the delivery
+     * @return The calculated delivery fee
+     * @throws IllegalArgumentException In case the input parameters are invalid
+     */
     @Operation(summary = "Calculate delivery fee", description = "Calculate the delivery fee for a given city and vehicle type at a specified time (time has to be in the format of YYYY-MM-DDThh:mm).")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Delivery fee calculation successful"),
             @ApiResponse(responseCode = "400", description = "Invalid input parameters")
     })
-
     @GetMapping
     public ResponseEntity<?> calculateDeliveryFee(
-            @Parameter(description = "Name of the city", required = true) @RequestParam String city,
-            @Parameter(description = "Type of the vehicle", required = true) @RequestParam String vehicleType,
-            @Parameter(description = "Date and time of delivery (optional)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateTime) {
+            @Parameter(description = "Name of the city (case sensitive)", required = true) @RequestParam String city,
+            @Parameter(description = "Type of vehicle (case sensitive)", required = true) @RequestParam String vehicleType,
+            @Parameter(description = "Date and time of delivery (optional)") @RequestParam(required = false) String dateTime) {
         try {
             double fee;
             if (dateTime == null) {

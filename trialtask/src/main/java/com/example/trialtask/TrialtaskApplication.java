@@ -12,10 +12,13 @@ import java.time.ZoneOffset;
 public class TrialtaskApplication {
 
 	public static void main(String[] args) {
-		long unixTimestamp = 1709925299L;
-		LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(unixTimestamp), ZoneOffset.UTC);
-		System.out.println("DateTime: " + dateTime);
+		// long unixTimestamp = 1709925299L;
+		// LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(unixTimestamp), ZoneOffset.UTC);
+		// System.out.println("DateTime: " + dateTime);
+
 		System.out.println("Interface to get delivery fees: http://localhost:8080/swagger-ui/index.html");
+		System.out.println("Access to the database: http://localhost:8080/h2-console");
+		System.out.println("Username and password should be empty");
 		SpringApplication.run(TrialtaskApplication.class, args);
 	}
 }

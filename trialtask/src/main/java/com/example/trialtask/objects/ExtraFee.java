@@ -17,15 +17,23 @@ public class ExtraFee {
     private Double extraFee;
 
     private String vehicleType;
+
     public ExtraFee() {
     }
 
+    /**
+     * Constructor for testing purpouses
+     */
     public ExtraFee(String conditionType, String conditionValue, double extraFee, String vehicleType) {
         this.conditionType = conditionType;
         this.conditionValue = conditionValue;
         this.extraFee = extraFee;
         this.vehicleType = vehicleType;
     }
+
+    /**
+     * Getters and setter for all the information that is collected
+     */
 
     public String getConditionType() {
         return conditionType;

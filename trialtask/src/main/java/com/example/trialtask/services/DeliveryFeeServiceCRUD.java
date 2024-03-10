@@ -8,15 +8,17 @@ import com.example.trialtask.objects.WeatherData;
 import com.example.trialtask.repositories.WeatherDataRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 
 /**
- * Service class for calculating delivery fees based on weather conditions and vehicle type.
- * Uses business rules from the database.
+ * Service class for calculating delivery fees based on weather conditions and vehicle type
+ * Uses business rules from the database tables base_fee and extra_fees
  */
 @Service
 public class DeliveryFeeServiceCRUD {
@@ -25,11 +27,9 @@ public class DeliveryFeeServiceCRUD {
     private final BaseFeeRepository baseFeeRepository;
 
     /**
-     * Constructs a new DeliveryFeeService with the provided WeatherDataRepository.
-     *
-     * @param weatherDataRepository the WeatherDataRepository to be used for fetching weather data
+     * Constructs a new DeliveryFeeService with the provided WeatherDataRepository
+     * @param weatherDataRepository the WeatherDataRepository used for fetching weather data
      */
-
     public DeliveryFeeServiceCRUD(WeatherDataRepository weatherDataRepository, BaseFeeRepository baseFeeRepository, ExtraFeeRepository extraFeeRepository) {
         this.extraFeeRepository = extraFeeRepository;
         this.weatherDataRepository = weatherDataRepository;
@@ -37,9 +37,8 @@ public class DeliveryFeeServiceCRUD {
     }
 
     /**
-     * Calculates the delivery fee for the given city and vehicle type.
-     *
-     * @param city        the city for which the delivery fee is to be calculated
+     * Calculates the delivery fee for the given city and vehicle type
+     * @param city        the city for which the delivery fee is calculated
      * @param vehicleType the type of vehicle used for delivery (car, scooter, bike)
      * @return the calculated delivery fee
      * @throws IllegalArgumentException if no weather data is found for the specified city
@@ -58,18 +57,18 @@ public class DeliveryFeeServiceCRUD {
     }
 
     /**
-     * Calculates the delivery fee for the given city, vehicle type, and datetime.
-     *
-     * @param city        the city for which the delivery fee is to be calculated
+     * Calculates the delivery fee for the given city, vehicle type, and datetime
+     * @param city        the city for which the delivery fee is calculated
      * @param vehicleType the type of vehicle used for delivery (car, scooter, bike)
-     * @param dateTime    the date and time for which the weather data is to be considered
+     * @param dateTime    the date and time for which the weather data is relevant
      * @return the calculated delivery fee
-     * @throws IllegalArgumentException if no weather data is found for the specified city and date/time
+     * @throws IllegalArgumentException if no weather data is found for the specified city and datetime
      */
-    public double calculateDeliveryFee(String city, String vehicleType, LocalDateTime dateTime) {
+    public double calculateDeliveryFee(String city, String vehicleType, String dateTime) {
         city = checkParameters(city, vehicleType);
         try {
-            long observationTimestamp = dateTime.toEpochSecond(ZoneOffset.UTC);
+            LocalDateTime localDateTime = LocalDateTime.parse(dateTime);
+            long observationTimestamp = localDateTime.toEpochSecond(ZoneOffset.UTC);
             WeatherData weatherData = weatherDataRepository.findByStationNameAndObservationTimestamp(city, observationTimestamp);
             if (weatherData == null) {
                 throw new IllegalArgumentException("No weather data found for the station: " + city + " at the specified date and time.");
@@ -80,6 +79,12 @@ public class DeliveryFeeServiceCRUD {
         }
     }
 
+    /**
+     * Checks if the parameters are there and changes the city names in order to find the information from the database correctly
+    * @param city         the city which is being checked
+     * @param vehicleType the vehicle which is being checked
+     * @return the appended city name
+     */
     private String checkParameters(String city, String vehicleType) {
         if (city == null) {
             throw new IllegalArgumentException("City cannot be null");
@@ -94,15 +99,6 @@ public class DeliveryFeeServiceCRUD {
         return city;
     }
 
-    /**
-     * Calculates the delivery fee for the given city, vehicle type, and weather data.
-     *
-     * @param city         the city for which the delivery fee is to be calculated
-     * @param vehicleType  the type of vehicle used for delivery (car, scooter, bike)
-     * @param weatherData  the weather data for the specified city
-     * @return the calculated delivery fee
-     */
-
     private double calculateDeliveryFeeExtracted(String city, String vehicleType, WeatherData weatherData) {
         double rbf = findRegionalBaseFee(city, vehicleType);
         double atef = calculateAirTemperatureExtraFee(vehicleType, weatherData.getAirTemperature());
@@ -114,7 +110,6 @@ public class DeliveryFeeServiceCRUD {
         if (wsef == -1000 || wpef == -1000) {
             throw new IllegalArgumentException("Usage of selected vehicle type is forbidden.");
         }
-
         return rbf + atef + wsef + wpef;
     }
     private double findRegionalBaseFee(String city, String vehicleType) {
@@ -144,15 +139,26 @@ public class DeliveryFeeServiceCRUD {
         return 0.0;
     }
 
+    /**
+     * Finds if the weather phenomenon at the time of the delivery results in an extra fee
+     * @param vehicleType       the vehicle type the fee is applicable to
+     * @param weatherPhenomenon the weather phenomenon of the data
+     * @return the extra fee
+     */
     private double calculateWeatherPhenomenonExtraFee(String vehicleType, String weatherPhenomenon) {
         List<ExtraFee> extraFees = extraFeeRepository.findByConditionTypeAndVehicleType("Weather Phenomenon", vehicleType);
         for (ExtraFee extraFee : extraFees) {
             String conditionValue = extraFee.getConditionValue();
-            if(conditionValue != null) {
-                String[] conditions = conditionValue.toLowerCase().split("[,\\s]+");
-                for(String condition : conditions) {
-                    condition = condition.replaceAll("or", "").trim();
-                    if(weatherPhenomenon.toLowerCase().contains(condition)) {
+            if (conditionValue != null) {
+                // splits the condition into parts by whitespace, removes all commas
+                String[] conditions = conditionValue.toLowerCase().replaceAll(",", "").split("\\s+");
+                List<String> conditionList = new ArrayList<>(Arrays.asList(conditions));
+                conditionList.removeIf(condition -> condition.equalsIgnoreCase("or")); // removes all "or"s
+                conditions = conditionList.toArray(new String[0]);
+
+                for (String condition : conditions) {
+                    condition = condition.trim();
+                    if (weatherPhenomenon.toLowerCase().contains(condition.toLowerCase()) && !condition.isEmpty()) {
                         return extraFee.getExtraFee();
                     }
                 }
@@ -161,22 +167,29 @@ public class DeliveryFeeServiceCRUD {
         return 0.0;
     }
 
+    /**
+     * Finds if the weather condition is in a certain range
+     * @param condition the condition that is being checked (wind, air temperature)
+     * @param value the value of the condition of the weatherdata
+     * @return true if the value is in the range, false if it not
+     */
     private boolean evaluateCondition(String condition, double value) {
         if(condition != null){
-        String[] parts = condition.split(" ");
-        if (parts.length == 2) {
-            if (parts[0].equals("<")) {
-                return value < Double.parseDouble(parts[1]);
-            } else if (parts[0].equals(">")) {
-                return value > Double.parseDouble(parts[1]);
+            String[] parts = condition.split(" ");
+            if (parts.length == 2) {
+                if (parts[0].equals("<")) {
+                    return value < Double.parseDouble(parts[1]);
+                } else if (parts[0].equals(">")) {
+                    return value > Double.parseDouble(parts[1]);
+                }
+            } else if (parts.length == 5) {
+                return value >= Double.parseDouble(parts[1]) && value < Double.parseDouble(parts[4]);
             }
-        } else if (parts.length == 5) {
-            return value >= Double.parseDouble(parts[1]) && value < Double.parseDouble(parts[4]);
+            return false;
         }
         return false;
     }
-        return false;
-    }
+
     private boolean isValidVehicleType(String vehicleType) {
         List<String> validVehicleTypes = Arrays.asList("car", "scooter", "bike");
         return validVehicleTypes.contains(vehicleType.toLowerCase());

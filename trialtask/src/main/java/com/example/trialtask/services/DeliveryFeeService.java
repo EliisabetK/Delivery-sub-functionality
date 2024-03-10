@@ -9,8 +9,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 /**
- * Service class for calculating delivery fees based on weather conditions and vehicle type.
+ * Service class for calculating delivery fees based on weather conditions and vehicle type
  * Not used in the project, it is replaced by DeliveryFeeServiceCRUD.java
+ * It is just here to show the logic that I used before I added business rules into a database
  */
 @Service
 public class DeliveryFeeService {
@@ -20,7 +21,6 @@ public class DeliveryFeeService {
 
     /**
      * Constructs a new DeliveryFeeService with the provided WeatherDataRepository.
-     *
      * @param weatherDataRepository the WeatherDataRepository to be used for fetching weather data
      */
     public DeliveryFeeService(WeatherDataRepository weatherDataRepository, BaseFeeRepository baseFeeRepository) {
@@ -29,8 +29,7 @@ public class DeliveryFeeService {
     }
 
     /**
-     * Calculates the delivery fee for the given city and vehicle type.
-     *
+     * Calculates the delivery fee for the given city and vehicle type
      * @param city        the city for which the delivery fee is to be calculated
      * @param vehicleType the type of vehicle used for delivery (car, scooter, bike)
      * @return the calculated delivery fee
@@ -50,13 +49,12 @@ public class DeliveryFeeService {
     }
 
     /**
-     * Calculates the delivery fee for the given city, vehicle type, and date/time.
-     *
+     * Calculates the delivery fee for the given city, vehicle type, and datetime.
      * @param city        the city for which the delivery fee is to be calculated
      * @param vehicleType the type of vehicle used for delivery (car, scooter, bike)
      * @param dateTime    the date and time for which the weather data is to be considered
      * @return the calculated delivery fee
-     * @throws IllegalArgumentException if no weather data is found for the specified city and date/time
+     * @throws IllegalArgumentException if no weather data is found for the specified city and datetime
      */
     public double calculateDeliveryFee(String city, String vehicleType, LocalDateTime dateTime) {
         if(city.equals("Tallinn"))
@@ -74,8 +72,6 @@ public class DeliveryFeeService {
 
     /**
      * Calculates the delivery fee for the given city, vehicle type, and weather data.
-     * This method is a helper method used by other public methods in this class.
-     *
      * @param city         the city for which the delivery fee is to be calculated
      * @param vehicleType  the type of vehicle used for delivery (car, scooter, bike)
      * @param weatherData  the weather data for the specified city
